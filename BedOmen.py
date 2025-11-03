@@ -2,7 +2,7 @@
 import time
 import minescript
 from minescript import EventQueue, echo, player_hand_items
-from minescript import player_press_use, player_press_swap_hands
+from minescript import player_press_use
 
 ITEM_ID = "minecraft:ominous_bottle"
 MAX_TRAPDOOR_DISTANCE = 4.5
@@ -34,14 +34,10 @@ def drink_offhand_bottle():
         echo("[potion] В левой руке нет ominous bottle")
         return False
 
-    # просто меняем руки и пьём без изменения взгляда
-    player_press_swap_hands(True);  time.sleep(0.03);  player_press_swap_hands(False)
-    time.sleep(0.05)
+    # Пьём из offhand без смены рук и без изменения взгляда
     player_press_use(True)
     time.sleep(DRINK_HOLD_SECONDS)
     player_press_use(False)
-    time.sleep(0.05)
-    player_press_swap_hands(True);  time.sleep(0.03);  player_press_swap_hands(False)
     return True
 
 def on_block_update(event):
