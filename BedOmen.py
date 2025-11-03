@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import time
 import minescript
-from minescript import EventQueue, echo, player_hand_items
+from minescript import EventQueue, EventType, echo, player_hand_items
 from minescript import player_press_use
 
 ITEM_ID = "minecraft:ominous_bottle"
@@ -62,11 +63,11 @@ def main():
         q.register_world_listener()
         while True:
             ev = q.get()
-            if ev.type == "outgoing_chat_intercept":
+            if ev.type == EventType.OUTGOING_CHAT_INTERCEPT:
                 toggle()
-            elif ev.type == "block_update":
+            elif ev.type == EventType.BLOCK_UPDATE:
                 on_block_update(ev)
-            elif ev.type == "world":
+            elif ev.type == EventType.WORLD:
                 pass
 
 if __name__ == "__main__":
