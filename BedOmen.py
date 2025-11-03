@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import time
 import minescript
-from minescript import EventQueue, echo, player_hand_items
+from minescript import EventQueue, EventType, echo, player_hand_items
 from minescript import player_press_use, player_press_swap_hands
 
 ITEM_ID = "minecraft:ominous_bottle"
@@ -13,38 +14,43 @@ last_trigger_time = 0.0
 trigger_cooldown = 0.25
 
 def toggle():
+    """Переключает состояние активности скрипта."""
     global active
     active = not active
     echo(f"[potion] {'ON' if active else 'OFF'}")
 
 def distance_to_player(pos):
+    """Рассчитывает расстояние от игрока до заданной позиции."""
     px, py, pz = minescript.player_position()
     x, y, z = pos
     return ((px - x) ** 2 + (py - y) ** 2 + (pz - z) ** 2) ** 0.5
 
 def is_trapdoor_open_event(old_state, new_state):
+    """Проверяет, является ли событие открытием люка."""
     if "_trapdoor" not in new_state:
         return False
     return ("open=true" in new_state) and ("open=true" not in old_state)
 
 def drink_offhand_bottle():
+    """Выпивает бутылку из левой руки."""
     hands = player_hand_items()
     off = hands.off_hand
     if not off or off.item != ITEM_ID or off.count <= 0:
         echo("[potion] В левой руке нет ominous bottle")
         return False
 
-    # просто меняем руки и пьём без изменения взгляда
-    player_press_swap_hands(True);  time.sleep(0.03);  player_press_swap_hands(False)
+    # Меняем руки, выпиваем бутылку и меняем руки обратно
+    player_press_swap_hands(True); time.sleep(0.03); player_press_swap_hands(False)
     time.sleep(0.05)
     player_press_use(True)
     time.sleep(DRINK_HOLD_SECONDS)
     player_press_use(False)
     time.sleep(0.05)
-    player_press_swap_hands(True);  time.sleep(0.03);  player_press_swap_hands(False)
+    player_press_swap_hands(True); time.sleep(0.03); player_press_swap_hands(False)
     return True
 
 def on_block_update(event):
+    """Обрабатывает событие обновления блока."""
     global last_trigger_time
     if not active:
         return
@@ -52,6 +58,8 @@ def on_block_update(event):
         return
     if distance_to_player(event.position) > MAX_TRAPDOOR_DISTANCE:
         return
+
+    # Проверка на перезарядку
     now = time.time()
     if now - last_trigger_time < trigger_cooldown:
         return
@@ -59,6 +67,7 @@ def on_block_update(event):
     drink_offhand_bottle()
 
 def main():
+    """Основная функция скрипта."""
     echo("[potion] Запущено. Используйте /potion для переключения.")
     with EventQueue() as q:
         q.register_outgoing_chat_interceptor(pattern=r"^/potion\s*$")
@@ -66,11 +75,12 @@ def main():
         q.register_world_listener()
         while True:
             ev = q.get()
-            if ev.type == "outgoing_chat_intercept":
+            if ev.type == EventType.OUTGOING_CHAT_INTERCEPT:
                 toggle()
-            elif ev.type == "block_update":
+            elif ev.type == EventType.BLOCK_UPDATE:
                 on_block_update(ev)
-            elif ev.type == "world":
+            elif ev.type == EventType.WORLD:
+                # Ничего не делаем при подключении/отключении от мира
                 pass
 
 if __name__ == "__main__":
